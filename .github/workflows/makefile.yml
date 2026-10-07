@@ -17,11 +17,11 @@ jobs:
     - name: make
       run: make defconfig
 
-      - name: make 
+    - name: make 
       run: make
 
     - name: Install dependencies
-      run: make install
+      run: make insta;;
 
     - name: Run check
       run: make check
