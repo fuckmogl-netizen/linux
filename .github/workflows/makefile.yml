@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Linux Kernel CI
 
 on:
   push:
@@ -8,23 +8,42 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
 
-    - name: make
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libncurses-dev \
+          bison \
+          flex \
+          libssl-dev \
+          libelf-dev \
+          bc \
+          kmod \
+          cpio \
+          rsync \
+          dwarves
+
+    - name: Setup ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: kernel-ccache-${{ github.sha }}
+        restore-keys: |
+          kernel-ccache-
+
+    - name: Configure kernel
       run: make defconfig
 
-    - name: make 
-      run: make
-
-    - name: Install dependencies
-      run: make insta;;
-
-    - name: Run check
-      run: make check
-
-    - name: Run distcheck
-      run: make distcheck
+    - name: Build kernel and modules
+      run: |
+        export CC="ccache gcc"
+        make -j$(nproc) bzImage modules
